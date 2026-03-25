@@ -32,7 +32,7 @@ export default async function DashboardPage() {
             </Badge>
             <CardTitle className="text-3xl">This user is signed in, but no department is active yet.</CardTitle>
             <CardDescription className="max-w-2xl text-base">
-              Ask an administrator to add at least one record in <code>public.user_departments</code> for this
+              Ask an admin to add at least one record in <code>public.user_departments</code> for this
               user, then sign in again with the department you want to work in.
             </CardDescription>
           </CardHeader>
