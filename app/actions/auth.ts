@@ -65,8 +65,9 @@ export async function loginAction(
   }
 
   const { userId, departmentId, pin } = validatedFields.data;
+  const redirectToEntry = formData.get("redirectTo");
   const redirectTo = sanitizeInternalRedirect(
-    typeof formData.get("redirectTo") === "string" ? formData.get("redirectTo") : null,
+    typeof redirectToEntry === "string" ? redirectToEntry : null,
   );
   const adminClient = createSupabaseAdminClient();
 
