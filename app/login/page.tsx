@@ -5,16 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRecentLoginIds } from "@/lib/auth/cookies";
 import { getSessionContext } from "@/lib/auth/session";
 import { getLoginDirectory } from "@/lib/data/login-directory";
+import { sanitizeInternalRedirect } from "@/lib/navigation";
 
-export default async function LoginPage() {
-  const [session, directory, recentUserIds] = await Promise.all([
+type LoginPageProps = {
+  searchParams: Promise<{
+    redirectTo?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const [session, directory, recentUserIds, resolvedSearchParams] = await Promise.all([
     getSessionContext(),
     getLoginDirectory(),
     getRecentLoginIds(),
+    searchParams,
   ]);
+  const redirectTo = sanitizeInternalRedirect(resolvedSearchParams.redirectTo);
 
   if (session.isConfigured && session.user) {
-    redirect("/");
+    redirect(redirectTo);
   }
 
   return (
@@ -32,7 +41,7 @@ export default async function LoginPage() {
             </CardContent>
           </Card>
         ) : (
-          <LoginForm recentUserIds={recentUserIds} users={directory.users} />
+          <LoginForm recentUserIds={recentUserIds} redirectTo={redirectTo} users={directory.users} />
         )}
       </div>
     </div>

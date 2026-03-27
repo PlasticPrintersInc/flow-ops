@@ -1,3 +1,5 @@
+import { buildDepartmentDestination } from "@/lib/department-routes";
+
 function normalizeScanValue(scanValue: string) {
   return scanValue.trim();
 }
@@ -23,15 +25,15 @@ export function resolveScanDestination(scanValue: string, departmentSlug?: strin
     }
 
     if (normalizedHost === "spmd.ai" && resourceType === "o") {
-      return `/departments/${departmentSlug}/orders/${encodeURIComponent(resourceId)}`;
+      return buildDepartmentDestination(departmentSlug, "pporders", resourceId);
     }
 
     if (normalizedHost === "spmd.ai" && resourceType === "i") {
-      return `/departments/${departmentSlug}/inventory/${encodeURIComponent(resourceId)}`;
+      return buildDepartmentDestination(departmentSlug, "inventory", resourceId);
     }
 
     if (normalizedHost === "govp.app" && resourceType === "o") {
-      return `/departments/${departmentSlug}/vporders/${encodeURIComponent(resourceId)}`;
+      return buildDepartmentDestination(departmentSlug, "vporders", resourceId);
     }
   } catch {
     return null;

@@ -22,10 +22,11 @@ import type { LoginDirectoryUser } from "@/lib/types";
 
 type LoginFormProps = {
   recentUserIds: string[];
+  redirectTo: string;
   users: LoginDirectoryUser[];
 };
 
-export function LoginForm({ recentUserIds, users }: LoginFormProps) {
+export function LoginForm({ recentUserIds, redirectTo, users }: LoginFormProps) {
   const [state, action, pending] = useActionState(loginAction, INITIAL_LOGIN_STATE);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
@@ -55,6 +56,7 @@ export function LoginForm({ recentUserIds, users }: LoginFormProps) {
         <CardContent className="space-y-5">
           <input name="userId" type="hidden" value={selectedUserId} />
           <input name="departmentId" type="hidden" value={resolvedDepartmentId} />
+          <input name="redirectTo" type="hidden" value={redirectTo} />
 
           <div className="space-y-2">
             <Label htmlFor="user-select">User</Label>

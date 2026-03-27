@@ -8,6 +8,7 @@ import {
   setActiveDepartmentCookie,
 } from "@/lib/auth/cookies";
 import { type LoginActionState, loginFormSchema } from "@/lib/auth/forms";
+import { sanitizeInternalRedirect } from "@/lib/navigation";
 import { createSupabaseServerClient, hasSupabaseClientEnv } from "@/lib/supabase/server";
 import { createSupabaseAdminClient, hasSupabaseAdminEnv } from "@/lib/supabase/admin";
 
@@ -64,6 +65,9 @@ export async function loginAction(
   }
 
   const { userId, departmentId, pin } = validatedFields.data;
+  const redirectTo = sanitizeInternalRedirect(
+    typeof formData.get("redirectTo") === "string" ? formData.get("redirectTo") : null,
+  );
   const adminClient = createSupabaseAdminClient();
 
   const { data, error } = await adminClient
@@ -122,7 +126,7 @@ export async function loginAction(
   await setActiveDepartmentCookie(department.id);
   await prependRecentLogin(data.id);
 
-  redirect("/");
+  redirect(redirectTo);
 }
 
 export async function logoutAction() {
