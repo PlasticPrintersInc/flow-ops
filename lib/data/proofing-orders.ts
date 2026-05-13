@@ -72,7 +72,7 @@ export type OrderItemRecord = {
 };
 
 export type ProductionJobRecord = {
-  order_id?: string | number | null;
+  order_number?: string | number | null;
 };
 
 export type ProofingDesignWithProofs = {
@@ -91,7 +91,7 @@ export type ProofingProductionOrder = {
   jobId: string;
   job: ProofingJobRecord;
   items: ProofingOrderItem[];
-  productionOrderId: string | null;
+  orderNumber: string | null;
   unassignedDesigns: ProofingDesignWithProofs[];
 };
 
@@ -302,13 +302,13 @@ function isArchivedItem(item: ProofingItemRecord) {
   return Boolean(item.archived);
 }
 
-function normalizeProductionOrderId(orderId: ProductionJobRecord["order_id"]) {
-  if (typeof orderId === "string") {
-    return orderId.trim() || null;
+function normalizeOrderNumber(orderNumber: ProductionJobRecord["order_number"]) {
+  if (typeof orderNumber === "string") {
+    return orderNumber.trim() || null;
   }
 
-  if (typeof orderId === "number") {
-    return String(orderId);
+  if (typeof orderNumber === "number") {
+    return String(orderNumber);
   }
 
   return null;
@@ -412,7 +412,7 @@ export async function getProofingProductionOrder(
             .sort(compareDesignsByName)
             .map(hydrateDesign),
         })),
-        productionOrderId: normalizeProductionOrderId(productionJob.order_id),
+        orderNumber: normalizeOrderNumber(productionJob.order_number),
         unassignedDesigns: designRecords
           .filter((design) => !assignedDesignIds.has(design.id))
           .sort(compareDesignsByName)

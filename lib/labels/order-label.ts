@@ -15,7 +15,7 @@ type OrderLabelLayout = {
   qrPixelSize: number;
   jobIdFontSizePt: number;
   jobIdGapPt: number;
-  productionOrderIdFontSizePt: number;
+  orderNumberFontSizePt: number;
   stackLineGapPt: number;
 };
 
@@ -29,12 +29,12 @@ export const ORDER_LABEL_LAYOUT: OrderLabelLayout = {
   qrPixelSize: 720,
   jobIdFontSizePt: 32,
   jobIdGapPt: 10,
-  productionOrderIdFontSizePt: 18,
+  orderNumberFontSizePt: 18,
   stackLineGapPt: 4,
 };
 
 type CreateOrderLabelPdfOptions = {
-  productionOrderId?: string | null;
+  orderNumber?: string | null;
 };
 
 function fitTextStack({
@@ -60,7 +60,7 @@ function fitTextStack({
     ...(secondaryText
       ? [
           {
-            fontSize: layout.productionOrderIdFontSizePt,
+            fontSize: layout.orderNumberFontSizePt,
             text: secondaryText,
           },
         ]
@@ -86,7 +86,7 @@ export async function createOrderLabelPdf(
   options: CreateOrderLabelPdfOptions = {},
 ) {
   const normalizedOrderId = normalizeOrderId(orderId);
-  const productionOrderId = options.productionOrderId?.trim() || null;
+  const orderNumber = options.orderNumber?.trim() || null;
   const token = encodeOrderId(normalizedOrderId);
   const orderUrl = `https://spmd.ai/o/${token}`;
   const layout = ORDER_LABEL_LAYOUT;
@@ -122,7 +122,7 @@ export async function createOrderLabelPdf(
     layout,
     pageHeight,
     primaryText: jobIdText,
-    secondaryText: productionOrderId,
+    secondaryText: orderNumber,
   });
   const jobIdLineHeights = jobIdLines.map((line) => labelFont.heightAtSize(line.fontSize));
   const stackLineGap = layout.stackLineGapPt * (jobIdLines[0].fontSize / layout.jobIdFontSizePt);

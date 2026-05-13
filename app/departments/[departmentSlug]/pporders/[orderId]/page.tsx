@@ -271,7 +271,7 @@ export default async function OrderPage({ params }: OrderRouteProps) {
             <PrintOrderLabelButton
               departmentSlug={departmentSlug}
               orderId={orderId}
-              productionOrderId={loadResult.ok ? loadResult.order.productionOrderId : null}
+              orderNumber={loadResult.ok ? loadResult.order.orderNumber : null}
             />
           </div>
         </div>
@@ -327,9 +327,9 @@ export default async function OrderPage({ params }: OrderRouteProps) {
                 </p>
               </div>
               <div className="rounded-xl border border-border/70 bg-background/75 p-4">
-                <p className="text-sm text-muted-foreground">Production order ID</p>
+                <p className="text-sm text-muted-foreground">Order number</p>
                 <p className="mt-1 font-mono text-lg text-foreground">
-                  {loadResult.order.productionOrderId ?? "Not returned"}
+                  {loadResult.order.orderNumber ?? "Not returned"}
                 </p>
               </div>
             </CardContent>
