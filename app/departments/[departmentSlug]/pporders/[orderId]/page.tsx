@@ -14,6 +14,9 @@ import {
   type ProofingStatus,
   type WorkOrderAttachment,
 } from "@/lib/data/proofing-orders";
+import { getQualityControlFlowRedirectUrl } from "@/lib/data/quality-control-flow";
+import { getShippingOrderRedirectUrl } from "@/lib/data/shipping-orders";
+import type { DepartmentSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type OrderRouteProps = {
@@ -28,6 +31,10 @@ function getRequestOrigin(requestHeaders: Headers) {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
 
   return host ? `${protocol}://${host}` : undefined;
+}
+
+function isShippingDepartment(department: DepartmentSummary) {
+  return department.slug === "shipping" || department.slug === "vp-shipping";
 }
 
 function statusTone(status?: ProofingStatus | null) {
@@ -192,6 +199,58 @@ export default async function OrderPage({ params }: OrderRouteProps) {
 
   if (departmentSlug !== session.user.department.slug) {
     redirect(`/departments/${session.user.department.slug}/pporders/${orderId}`);
+  }
+
+  if (session.user.department.slug === "quality-control") {
+    const qualityControlLookup = await getQualityControlFlowRedirectUrl(orderId);
+
+    if (qualityControlLookup.ok) {
+      redirect(qualityControlLookup.redirectUrl);
+    }
+
+    return (
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
+        <Card className="rounded-xl border-destructive/30 bg-card/75">
+          <CardHeader>
+            <CardTitle>Quality control flow unavailable</CardTitle>
+            <CardDescription>
+              {qualityControlLookup.status
+                ? `Airtable status ${qualityControlLookup.status}`
+                : "Airtable configuration or lookup issue"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="rounded-xl border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive">
+              {qualityControlLookup.message}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isShippingDepartment(session.user.department)) {
+    const shippingLookup = await getShippingOrderRedirectUrl(orderId, getRequestOrigin(requestHeaders));
+
+    if (shippingLookup.ok) {
+      redirect(shippingLookup.redirectUrl);
+    }
+
+    return (
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center px-4 py-8 sm:px-6 lg:px-8">
+        <Card className="rounded-xl border-destructive/30 bg-card/75">
+          <CardHeader>
+            <CardTitle>Shipping order unavailable</CardTitle>
+            <CardDescription>Supabase jobs lookup issue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="rounded-xl border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive">
+              {shippingLookup.message}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const loadResult = await getProofingProductionOrder(orderId, getRequestOrigin(requestHeaders));
