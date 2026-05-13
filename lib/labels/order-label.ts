@@ -20,13 +20,13 @@ type OrderLabelLayout = {
 export const ORDER_LABEL_LAYOUT: OrderLabelLayout = {
   labelWidthIn: 3.5,
   labelHeightIn: 1.13,
-  qrSizeIn: 0.94,
+  qrSizeIn: 1.13,
   qrOffsetXIn: 0,
-  qrOffsetYIn: 0.05,
+  qrOffsetYIn: 0,
   qrMarginModules: 1,
   qrPixelSize: 720,
-  jobIdFontSizePt: 7,
-  jobIdGapPt: 1.5,
+  jobIdFontSizePt: 34,
+  jobIdGapPt: 10,
 };
 
 export async function createOrderLabelPdf(orderId: string) {
@@ -37,7 +37,7 @@ export async function createOrderLabelPdf(orderId: string) {
   const pageWidth = layout.labelWidthIn * POINTS_PER_INCH;
   const pageHeight = layout.labelHeightIn * POINTS_PER_INCH;
   const qrSize = layout.qrSizeIn * POINTS_PER_INCH;
-  const qrX = (pageWidth - qrSize) / 2 + layout.qrOffsetXIn * POINTS_PER_INCH;
+  const qrX = layout.qrOffsetXIn * POINTS_PER_INCH;
   const qrY = (pageHeight - qrSize) / 2 + layout.qrOffsetYIn * POINTS_PER_INCH;
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([pageWidth, pageHeight]);
@@ -57,16 +57,27 @@ export async function createOrderLabelPdf(orderId: string) {
     height: qrSize,
   });
 
-  const jobIdText = `Job ID: ${normalizedOrderId}`;
-  const jobIdTextWidth = labelFont.widthOfTextAtSize(jobIdText, layout.jobIdFontSizePt);
-  const jobIdX = (pageWidth - jobIdTextWidth) / 2;
-  const jobIdY = qrY - layout.jobIdGapPt - layout.jobIdFontSizePt;
+  const jobIdText = `${normalizedOrderId}`;
+  const jobIdAreaX = qrX + qrSize + layout.jobIdGapPt;
+  const jobIdAreaWidth = pageWidth - jobIdAreaX;
+  const jobIdMaxHeight = pageHeight * 0.76;
+  const jobIdWidthAtLayoutSize = labelFont.widthOfTextAtSize(jobIdText, layout.jobIdFontSizePt);
+  const jobIdHeightAtLayoutSize = labelFont.heightAtSize(layout.jobIdFontSizePt);
+  const jobIdFontSize = Math.min(
+    layout.jobIdFontSizePt,
+    (layout.jobIdFontSizePt * jobIdAreaWidth) / jobIdWidthAtLayoutSize,
+    (layout.jobIdFontSizePt * jobIdMaxHeight) / jobIdHeightAtLayoutSize,
+  );
+  const jobIdTextWidth = labelFont.widthOfTextAtSize(jobIdText, jobIdFontSize);
+  const jobIdTextHeight = labelFont.heightAtSize(jobIdFontSize);
+  const jobIdX = jobIdAreaX + (jobIdAreaWidth - jobIdTextWidth) / 2;
+  const jobIdY = (pageHeight - jobIdTextHeight) / 2;
 
   page.drawText(jobIdText, {
     x: jobIdX,
     y: jobIdY,
     font: labelFont,
-    size: layout.jobIdFontSizePt,
+    size: jobIdFontSize,
   });
 
   return {
