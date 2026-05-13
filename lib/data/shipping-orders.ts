@@ -6,7 +6,9 @@ type ShippingJobRow = {
 
 type ShippingJobApiEnvelope =
   | {
-      record?: ShippingJobRow | null;
+      records?: Array<{
+        data?: ShippingJobRow | null;
+      }>;
     }
   | null;
 
@@ -84,7 +86,7 @@ async function getShippingJob(jobId: string, requestOrigin?: string) {
   }
 
   const response = await fetch(
-    buildApiUrl(baseUrl, "/api/supabase/proofing/jobs/get", { jobid: jobId }),
+    buildApiUrl(baseUrl, "/api/supabase/jobs/get", { orderId: jobId }),
     {
       cache: "no-store",
       headers: {
@@ -100,11 +102,13 @@ async function getShippingJob(jobId: string, requestOrigin?: string) {
 
   const envelope = (await response.json()) as ShippingJobApiEnvelope;
 
-  if (!envelope?.record) {
+  const record = envelope?.records?.[0]?.data;
+
+  if (!record) {
     throw new ShippingOrderLookupError(`Shipping jobs API did not return a record for ${jobId}.`);
   }
 
-  return envelope.record;
+  return record;
 }
 
 export async function getShippingOrderRedirectUrl(
