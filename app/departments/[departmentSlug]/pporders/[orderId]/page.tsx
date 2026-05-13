@@ -268,7 +268,11 @@ export default async function OrderPage({ params }: OrderRouteProps) {
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
             {loadResult.ok ? <StatusBadge status={loadResult.order.job.status} /> : null}
-            <PrintOrderLabelButton departmentSlug={departmentSlug} orderId={orderId} />
+            <PrintOrderLabelButton
+              departmentSlug={departmentSlug}
+              orderId={orderId}
+              productionOrderId={loadResult.ok ? loadResult.order.productionOrderId : null}
+            />
           </div>
         </div>
       </div>
@@ -311,7 +315,7 @@ export default async function OrderPage({ params }: OrderRouteProps) {
               <CardTitle>Job details</CardTitle>
               <CardDescription>Signed in as {session.user.displayName}</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+            <CardContent className="grid gap-4 md:grid-cols-3">
               <div className="rounded-xl border border-border/70 bg-background/75 p-4">
                 <p className="text-sm text-muted-foreground">Scanned order ID</p>
                 <p className="mt-1 font-mono text-lg text-foreground">{orderId}</p>
@@ -320,6 +324,12 @@ export default async function OrderPage({ params }: OrderRouteProps) {
                 <p className="text-sm text-muted-foreground">Job status</p>
                 <p className="mt-1 font-mono text-lg text-foreground">
                   {loadResult.order.job.status?.name ?? "No status"}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border/70 bg-background/75 p-4">
+                <p className="text-sm text-muted-foreground">Production order ID</p>
+                <p className="mt-1 font-mono text-lg text-foreground">
+                  {loadResult.order.productionOrderId ?? "Not returned"}
                 </p>
               </div>
             </CardContent>

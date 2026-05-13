@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, StandardFonts, type PDFFont } from "pdf-lib";
 import QRCode from "qrcode";
 
 import { encodeOrderId, normalizeOrderId } from "@/lib/labels/order-code";
@@ -15,6 +15,8 @@ type OrderLabelLayout = {
   qrPixelSize: number;
   jobIdFontSizePt: number;
   jobIdGapPt: number;
+  productionOrderIdFontSizePt: number;
+  stackLineGapPt: number;
 };
 
 export const ORDER_LABEL_LAYOUT: OrderLabelLayout = {
@@ -25,12 +27,66 @@ export const ORDER_LABEL_LAYOUT: OrderLabelLayout = {
   qrOffsetYIn: 0,
   qrMarginModules: 1,
   qrPixelSize: 720,
-  jobIdFontSizePt: 34,
+  jobIdFontSizePt: 32,
   jobIdGapPt: 10,
+  productionOrderIdFontSizePt: 18,
+  stackLineGapPt: 4,
 };
 
-export async function createOrderLabelPdf(orderId: string) {
+type CreateOrderLabelPdfOptions = {
+  productionOrderId?: string | null;
+};
+
+function fitTextStack({
+  areaWidth,
+  font,
+  layout,
+  pageHeight,
+  primaryText,
+  secondaryText,
+}: {
+  areaWidth: number;
+  font: PDFFont;
+  layout: OrderLabelLayout;
+  pageHeight: number;
+  primaryText: string;
+  secondaryText: string | null;
+}) {
+  const baseLines = [
+    {
+      fontSize: layout.jobIdFontSizePt,
+      text: primaryText,
+    },
+    ...(secondaryText
+      ? [
+          {
+            fontSize: layout.productionOrderIdFontSizePt,
+            text: secondaryText,
+          },
+        ]
+      : []),
+  ];
+  const baseTextWidths = baseLines.map((line) => font.widthOfTextAtSize(line.text, line.fontSize));
+  const baseLineHeights = baseLines.map((line) => font.heightAtSize(line.fontSize));
+  const baseStackHeight =
+    baseLineHeights.reduce((total, height) => total + height, 0) +
+    Math.max(baseLines.length - 1, 0) * layout.stackLineGapPt;
+  const maxWidthRatio = Math.min(...baseTextWidths.map((width) => areaWidth / width));
+  const maxHeightRatio = (pageHeight * 0.82) / baseStackHeight;
+  const scale = Math.min(1, maxWidthRatio, maxHeightRatio);
+
+  return baseLines.map((line) => ({
+    fontSize: line.fontSize * scale,
+    text: line.text,
+  }));
+}
+
+export async function createOrderLabelPdf(
+  orderId: string,
+  options: CreateOrderLabelPdfOptions = {},
+) {
   const normalizedOrderId = normalizeOrderId(orderId);
+  const productionOrderId = options.productionOrderId?.trim() || null;
   const token = encodeOrderId(normalizedOrderId);
   const orderUrl = `https://spmd.ai/o/${token}`;
   const layout = ORDER_LABEL_LAYOUT;
@@ -60,24 +116,35 @@ export async function createOrderLabelPdf(orderId: string) {
   const jobIdText = `${normalizedOrderId}`;
   const jobIdAreaX = qrX + qrSize + layout.jobIdGapPt;
   const jobIdAreaWidth = pageWidth - jobIdAreaX;
-  const jobIdMaxHeight = pageHeight * 0.76;
-  const jobIdWidthAtLayoutSize = labelFont.widthOfTextAtSize(jobIdText, layout.jobIdFontSizePt);
-  const jobIdHeightAtLayoutSize = labelFont.heightAtSize(layout.jobIdFontSizePt);
-  const jobIdFontSize = Math.min(
-    layout.jobIdFontSizePt,
-    (layout.jobIdFontSizePt * jobIdAreaWidth) / jobIdWidthAtLayoutSize,
-    (layout.jobIdFontSizePt * jobIdMaxHeight) / jobIdHeightAtLayoutSize,
-  );
-  const jobIdTextWidth = labelFont.widthOfTextAtSize(jobIdText, jobIdFontSize);
-  const jobIdTextHeight = labelFont.heightAtSize(jobIdFontSize);
-  const jobIdX = jobIdAreaX + (jobIdAreaWidth - jobIdTextWidth) / 2;
-  const jobIdY = (pageHeight - jobIdTextHeight) / 2;
-
-  page.drawText(jobIdText, {
-    x: jobIdX,
-    y: jobIdY,
+  const jobIdLines = fitTextStack({
+    areaWidth: jobIdAreaWidth,
     font: labelFont,
-    size: jobIdFontSize,
+    layout,
+    pageHeight,
+    primaryText: jobIdText,
+    secondaryText: productionOrderId,
+  });
+  const jobIdLineHeights = jobIdLines.map((line) => labelFont.heightAtSize(line.fontSize));
+  const stackLineGap = layout.stackLineGapPt * (jobIdLines[0].fontSize / layout.jobIdFontSizePt);
+  const jobIdStackHeight =
+    jobIdLineHeights.reduce((total, height) => total + height, 0) +
+    Math.max(jobIdLines.length - 1, 0) * stackLineGap;
+  let jobIdY = (pageHeight - jobIdStackHeight) / 2 + jobIdStackHeight;
+
+  jobIdLines.forEach((line, index) => {
+    const lineHeight = jobIdLineHeights[index];
+    const lineTextWidth = labelFont.widthOfTextAtSize(line.text, line.fontSize);
+
+    jobIdY -= lineHeight;
+
+    page.drawText(line.text, {
+      x: jobIdAreaX + (jobIdAreaWidth - lineTextWidth) / 2,
+      y: jobIdY,
+      font: labelFont,
+      size: line.fontSize,
+    });
+
+    jobIdY -= stackLineGap;
   });
 
   return {

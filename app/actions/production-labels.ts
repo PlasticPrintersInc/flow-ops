@@ -48,8 +48,14 @@ export async function printOrderLabelAction(
     };
   }
 
+  const productionOrderIdField = formData.get("productionOrderId");
+  const productionOrderId =
+    typeof productionOrderIdField === "string" && productionOrderIdField.trim()
+      ? productionOrderIdField.trim()
+      : null;
+
   try {
-    const label = await createOrderLabelPdf(orderId);
+    const label = await createOrderLabelPdf(orderId, { productionOrderId });
 
     if (isOrderLabelTestMode()) {
       return {

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 type PrintOrderLabelButtonProps = {
   departmentSlug: string;
   orderId: string;
+  productionOrderId?: string | null;
 };
 
 const INITIAL_PRINT_ORDER_LABEL_STATE: PrintOrderLabelActionState = {
@@ -32,7 +33,11 @@ function downloadPdf(fileName: string, pdfBase64: string) {
   window.URL.revokeObjectURL(url);
 }
 
-export function PrintOrderLabelButton({ departmentSlug, orderId }: PrintOrderLabelButtonProps) {
+export function PrintOrderLabelButton({
+  departmentSlug,
+  orderId,
+  productionOrderId,
+}: PrintOrderLabelButtonProps) {
   const [state, action, pending] = useActionState(
     printOrderLabelAction,
     INITIAL_PRINT_ORDER_LABEL_STATE,
@@ -50,6 +55,7 @@ export function PrintOrderLabelButton({ departmentSlug, orderId }: PrintOrderLab
     <form action={action} className="flex flex-col items-stretch gap-2 sm:items-end">
       <input name="departmentSlug" type="hidden" value={departmentSlug} />
       <input name="orderId" type="hidden" value={orderId} />
+      <input name="productionOrderId" type="hidden" value={productionOrderId ?? ""} />
       <Button disabled={pending} type="submit">
         <Printer className="size-4" />
         {pending ? "Sending label..." : "Print order label"}
