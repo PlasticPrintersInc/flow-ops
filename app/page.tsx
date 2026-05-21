@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppSetupPanel } from "@/components/setup/app-setup-panel";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAuthenticatedSessionContext } from "@/lib/auth/session";
 
@@ -41,8 +39,6 @@ export default async function DashboardPage() {
     );
   }
 
-  const departmentSlug = session.user.department.slug;
-
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 px-6 py-8 shadow-[0_25px_90px_-40px_rgba(15,23,42,0.45)] backdrop-blur sm:px-8">
@@ -56,23 +52,9 @@ export default async function DashboardPage() {
               Welcome back, {session.user.displayName.split(" ")[0]}.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              This starter shell is ready for user sign-in, department-aware routing, and fast scan entry from
-              anywhere in the app.
+              You are signed in to {session.user.department.name}. Dashboard work queues will appear here as they
+              become active for launch.
             </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href={`/departments/${departmentSlug}/scan?code=FLOW-DEMO-1001`}>Open unrecognized scan</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={`/departments/${departmentSlug}/orders/24018`}>Preview order route</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={`/departments/${departmentSlug}/inventory/INV-7712`}>Preview inventory route</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={`/departments/${departmentSlug}/vporders/VP-24018`}>Preview VP order route</Link>
-            </Button>
           </div>
         </div>
       </section>
@@ -80,8 +62,8 @@ export default async function DashboardPage() {
       <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
         <Card className="border-border/70 bg-card/75">
           <CardHeader>
-            <CardTitle>What this first cut already handles</CardTitle>
-            <CardDescription>Enough infrastructure to start building the internal workflows on top.</CardDescription>
+            <CardTitle>Launch-ready capabilities</CardTitle>
+            <CardDescription>Current live surfaces for this department.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
@@ -98,18 +80,15 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
-              <p className="text-sm font-medium text-foreground">Scanner-ready routing</p>
+              <p className="text-sm font-medium text-foreground">Scan routing</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                The scan field can be focused globally with <kbd className="rounded border px-1.5 py-0.5">Ctrl</kbd>/
-                <kbd className="rounded border px-1.5 py-0.5">Cmd</kbd> +{" "}
-                <kbd className="rounded border px-1.5 py-0.5">Shift</kbd> +{" "}
-                <kbd className="rounded border px-1.5 py-0.5">O</kbd>.
+                Recognized labels route to the active department without exposing preview-only dashboard links.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
-              <p className="text-sm font-medium text-foreground">Supabase-backed model</p>
+              <p className="text-sm font-medium text-foreground">Department access</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Users, departments, and department access are modeled in SQL and ready for expansion.
+                Users only land in routes for the department selected during sign-in.
               </p>
             </div>
           </CardContent>
@@ -117,20 +96,17 @@ export default async function DashboardPage() {
 
         <Card className="border-border/70 bg-card/75">
           <CardHeader>
-            <CardTitle>Current lane</CardTitle>
+            <CardTitle>Current station</CardTitle>
             <CardDescription>Signed in as {session.user.department.name}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-dashed border-border/80 bg-background/75 p-4">
-              <p className="text-sm font-medium">Next pieces to add</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Order detail rules, department-specific task queues, and the actual scanner destination logic can
-                now be layered in without reworking auth or navigation.
-              </p>
+            <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
+              <p className="text-sm text-muted-foreground">Active department</p>
+              <p className="mt-1 text-lg font-medium text-foreground">{session.user.department.name}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
-              <p className="text-sm text-muted-foreground">Active route prefix</p>
-              <p className="mt-1 font-mono text-sm text-foreground">/departments/{departmentSlug}/...</p>
+              <p className="text-sm text-muted-foreground">Signed-in user</p>
+              <p className="mt-1 text-lg font-medium text-foreground">{session.user.displayName}</p>
             </div>
           </CardContent>
         </Card>

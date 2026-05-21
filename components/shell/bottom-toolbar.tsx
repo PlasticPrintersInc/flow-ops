@@ -54,7 +54,7 @@ export function BottomToolbar({ isSupabaseConfigured, session }: BottomToolbarPr
   const [scanError, setScanError] = useState("");
   const canScan = Boolean(session?.department);
   const shortcutLabel = getShortcutLabel();
-  const launcherLabel = canScan ? "Scan Order" : "Sign in to enable scanning";
+  const launcherLabel = canScan ? "Scan label" : "Sign in to enable scanning";
 
   function openScanDialog() {
     if (!canScan) {
@@ -262,11 +262,7 @@ export function BottomToolbar({ isSupabaseConfigured, session }: BottomToolbarPr
                   Log out
                 </Button>
               </form>
-            ) : (
-              <Button disabled variant="outline">
-                Log out
-              </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
