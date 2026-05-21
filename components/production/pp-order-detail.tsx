@@ -55,7 +55,11 @@ export function PpOrderDetail({
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
             {loadResult.ok ? <PpOrderStatusBadge status={loadResult.order.job.status} /> : null}
-            <PrintOrderLabelButton departmentSlug={departmentSlug} orderId={orderId} />
+            <PrintOrderLabelButton
+              departmentSlug={departmentSlug}
+              orderId={orderId}
+              orderNumber={loadResult.ok ? loadResult.order.orderNumber : null}
+            />
           </div>
         </div>
       </div>
@@ -88,7 +92,7 @@ export function PpOrderDetail({
               <CardTitle>Job details</CardTitle>
               <CardDescription>Signed in as {displayName}</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+            <CardContent className="grid gap-4 md:grid-cols-3">
               <div className="rounded-xl border border-border/70 bg-background/75 p-4">
                 <p className="text-sm text-muted-foreground">Scanned order ID</p>
                 <p className="mt-1 font-mono text-lg text-foreground">{orderId}</p>
@@ -97,6 +101,12 @@ export function PpOrderDetail({
                 <p className="text-sm text-muted-foreground">Job status</p>
                 <p className="mt-1 font-mono text-lg text-foreground">
                   {loadResult.order.job.status?.name ?? "No status"}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border/70 bg-background/75 p-4">
+                <p className="text-sm text-muted-foreground">Order number</p>
+                <p className="mt-1 font-mono text-lg text-foreground">
+                  {loadResult.order.orderNumber ?? "Not returned"}
                 </p>
               </div>
             </CardContent>

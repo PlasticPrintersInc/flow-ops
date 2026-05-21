@@ -48,8 +48,14 @@ export async function printOrderLabelAction(
     };
   }
 
+  const orderNumberField = formData.get("orderNumber");
+  const orderNumber =
+    typeof orderNumberField === "string" && orderNumberField.trim()
+      ? orderNumberField.trim()
+      : null;
+
   try {
-    const label = await createOrderLabelPdf(orderId);
+    const label = await createOrderLabelPdf(orderId, { orderNumber });
 
     if (isOrderLabelTestMode()) {
       return {

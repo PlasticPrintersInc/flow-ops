@@ -71,6 +71,10 @@ export type OrderItemRecord = {
   work_order?: WorkOrderAttachment[] | null;
 };
 
+export type ProductionJobRecord = {
+  order_number?: string | number | null;
+};
+
 export type ProofingDesignWithProofs = {
   design: ProofingDesignRecord;
   proofs: ProofingProofRecord[];
@@ -87,6 +91,7 @@ export type ProofingProductionOrder = {
   jobId: string;
   job: ProofingJobRecord;
   items: ProofingOrderItem[];
+  orderNumber: string | null;
   unassignedDesigns: ProofingDesignWithProofs[];
 };
 
@@ -196,6 +201,25 @@ async function getSingleRecord<TRecord>(
   return envelope.record;
 }
 
+async function getFirstRecordData<TRecord extends object>(
+  pathname: string,
+  params: Record<string, string>,
+  requestOrigin?: string,
+): Promise<TRecord> {
+  const envelope = await proofingJobsApiGet<TRecord>(pathname, params, requestOrigin);
+  const firstRecord = envelope?.records?.[0];
+
+  if (!firstRecord) {
+    throw new ProofingJobsApiError(`Proofing jobs API did not return a record for ${pathname}.`);
+  }
+
+  const normalizedRecord = firstRecord as TRecord | { id?: string; data?: TRecord };
+
+  return "data" in normalizedRecord
+    ? (normalizedRecord.data ?? ({} as TRecord))
+    : (normalizedRecord as TRecord);
+}
+
 function normalizeRecords<TRecord extends object>(
   envelope: ApiEnvelope<TRecord>,
   requestedIds: string[],
@@ -278,6 +302,18 @@ function isArchivedItem(item: ProofingItemRecord) {
   return Boolean(item.archived);
 }
 
+function normalizeOrderNumber(orderNumber: ProductionJobRecord["order_number"]) {
+  if (typeof orderNumber === "string") {
+    return orderNumber.trim() || null;
+  }
+
+  if (typeof orderNumber === "number") {
+    return String(orderNumber);
+  }
+
+  return null;
+}
+
 function compareItemsByName(left: ProofingItemRecord, right: ProofingItemRecord) {
   return (left.itemid ?? left.id).localeCompare(right.itemid ?? right.id, undefined, {
     numeric: true,
@@ -297,11 +333,18 @@ export async function getProofingProductionOrder(
   requestOrigin?: string,
 ): Promise<ProofingOrderLoadResult> {
   try {
-    const job = await getSingleRecord<ProofingJobRecord>(
-      "/api/supabase/proofing/jobs/get",
-      { jobid: jobId },
-      requestOrigin,
-    );
+    const [job, productionJob] = await Promise.all([
+      getSingleRecord<ProofingJobRecord>(
+        "/api/supabase/proofing/jobs/get",
+        { jobid: jobId },
+        requestOrigin,
+      ),
+      getFirstRecordData<ProductionJobRecord>(
+        "/api/supabase/jobs/get",
+        { orderId: jobId },
+        requestOrigin,
+      ),
+    ]);
 
     const itemIds = linkedRecordIds(job.items);
     const items = await getRecords<Omit<ProofingItemRecord, "id">>(
@@ -369,6 +412,7 @@ export async function getProofingProductionOrder(
             .sort(compareDesignsByName)
             .map(hydrateDesign),
         })),
+        orderNumber: normalizeOrderNumber(productionJob.order_number),
         unassignedDesigns: designRecords
           .filter((design) => !assignedDesignIds.has(design.id))
           .sort(compareDesignsByName)
