@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     default: "Flow Ops",
     template: "%s | Flow Ops",
   },
-  description: "Internal operations starter for department-aware scanning workflows.",
+  description: "Internal operations tooling for department-aware scanning workflows.",
 };
 
 export default async function RootLayout({

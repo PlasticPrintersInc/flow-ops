@@ -1,8 +1,6 @@
-import { redirect } from "next/navigation";
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireAuthenticatedSessionContext } from "@/lib/auth/session";
+import { requireDepartmentRouteSession } from "@/lib/auth/department-route";
 
 type ScanFallbackPageProps = {
   params: Promise<{
@@ -14,31 +12,14 @@ type ScanFallbackPageProps = {
 };
 
 export default async function ScanFallbackPage({ params, searchParams }: ScanFallbackPageProps) {
-  const [{ departmentSlug }, resolvedSearchParams, session] = await Promise.all([
-    params,
-    searchParams,
-    requireAuthenticatedSessionContext(),
-  ]);
-
-  if (!session.isConfigured) {
-    redirect("/");
-  }
-
-  if (!session.user) {
-    redirect("/login");
-  }
-
-  if (!session.user.department) {
-    redirect("/");
-  }
-
-  if (departmentSlug !== session.user.department.slug) {
+  const [{ departmentSlug }, resolvedSearchParams] = await Promise.all([params, searchParams]);
+  const session = await requireDepartmentRouteSession(departmentSlug, (activeDepartmentSlug) => {
     const fallbackCode = resolvedSearchParams.code
       ? `?code=${encodeURIComponent(resolvedSearchParams.code)}`
       : "";
 
-    redirect(`/departments/${session.user.department.slug}/scan${fallbackCode}`);
-  }
+    return `/departments/${activeDepartmentSlug}/scan${fallbackCode}`;
+  });
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
