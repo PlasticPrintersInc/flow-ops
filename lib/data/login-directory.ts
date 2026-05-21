@@ -13,6 +13,7 @@ type JoinedDepartment = {
 type LoginDirectoryRow = {
   id: string;
   display_name: string;
+  default_department_id: string | null;
   is_active: boolean;
   user_departments:
     | Array<{
@@ -44,6 +45,7 @@ export const getLoginDirectory = cache(async () => {
       `
         id,
         display_name,
+        default_department_id,
         is_active,
         user_departments (
           departments (
@@ -62,6 +64,7 @@ export const getLoginDirectory = cache(async () => {
     .map((row) => ({
       id: row.id,
       displayName: row.display_name,
+      defaultDepartmentId: row.default_department_id,
       departments: (row.user_departments ?? [])
         .flatMap((membership) => normalizeJoinedDepartments(membership.departments))
         .filter((department): department is NonNullable<typeof department> => {

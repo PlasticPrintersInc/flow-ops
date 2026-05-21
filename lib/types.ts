@@ -7,6 +7,7 @@ export type DepartmentSummary = {
 export type LoginDirectoryUser = {
   id: string;
   displayName: string;
+  defaultDepartmentId: string | null;
   departments: DepartmentSummary[];
 };
 
